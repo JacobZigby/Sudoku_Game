@@ -7,12 +7,11 @@ class Grid:
     TOTAL_SQUARES = 9 * 9
     #avaliable values in a 3 by 3 grid
     VALUES = {1,2,3,4,5,6,7,8,9}
-    #initalize grid
-    grid = None
-    
 
     #constructor method
     def __init__(self):
+        #initalize grid
+        self.grid = None 
         #generate the grid itself
         self.generator()
 
@@ -85,16 +84,16 @@ class Grid:
 
         return list(values)
 
-    #Check to see if a hypothetical value can fit into the grid at selected location
-    def is_valid(self, row, col, value):
+    #Check to see if a hypothetical value can fit into a given grid at selected location
+    def is_valid(grid, row:int, col:int, value:int):
         #check to see if new value already exists in row
-        if value in self.grid[row]:
+        if value in grid[row]:
             #if value exists return false
             print(f"Value {value} exists on row: {row}")
             return False
         
         #check to see if new value already exists in col
-        if value in self.grid[:,col]:
+        if value in grid[:,col]:
             #if value exists return false
             print(f"Value {value} exists on col: {col}")
             return False
@@ -104,7 +103,7 @@ class Grid:
         row_quad = row // 3
         
         #create a list to easily check if value exists inside
-        quad_list = self.grid[row_quad*3:(row_quad+1)*3, col_quad*3:(col_quad+1)*3].flatten()
+        quad_list = grid[row_quad*3:(row_quad+1)*3, col_quad*3:(col_quad+1)*3].flatten()
 
         #check if the value exists inside the quad
         if value in quad_list:
@@ -113,6 +112,13 @@ class Grid:
         
         #if none of the conditions passed, return true as value does not exist yet
         return True
+
+    #Check to see if a given value matches with the one found on the grid
+    def is_match(self, row:int, col:int, value:int):
+        if self.grid[row,col] == value:
+            return True
+        
+        return False
 
     #method to remove values from valid sudoku grids, returns a new grid
     def random_removal(self, remove_num = 0):
@@ -136,28 +142,42 @@ class Grid:
     def get_grid(self):
         return(self.grid)
 
+    #basic set function
     def set_grid(self, grid):
         self.grid = grid
 
-    def authenticator(grid):
-        #the grid should be a 2d array with the shape of 9 by 9
-        #potential update (make it so sudukos with missing values in boxes can still be accepted)
+    #create a set row and col method and an is_solvable method that uses a solve method
 
-        #step 1 check what type of object grid is and turn into numpy array if need be
-        #step 2 check each column and row and make sure all values are unique from 1-9
-        #step 3 check each quad and make sure each value are unique from 1-9
+    def __eq__(self, grid: object) -> bool:
+        pass
+
+    def authenticator(grid, solved = True):
+        #the grid should be a 2d array with the shape of 9 by 9
+        if type(grid) not in [np.ndarray, list]:
+            raise TypeError(f"Recieved: {type(grid)} Expected: (ndarray, List)")
+
+        #change to numpy array and check to make sure size is 9X9
+        if type(grid) is list:
+            grid = np.array(grid)
 
         #offsets to be used to determin which quad to check at the specified time
         quad_col_offset = 0
         quad_row_offset = 0
-        #we're currently just wanting to solve something right now so here's the quick and dirty verion
-        for i in range(len(grid)):
-            row = np.bincount(grid[i], minlength=10)
-            col = np.bincount(grid[:,i],minlength=10)
 
+        #Check to see if only one instance of each number exists per column or row
+        for i in range(len(grid)):
+            row = set(np.bincount(grid[i], minlength=10)[1:])
+            col = set(np.bincount(grid[:,i],minlength=10)[1:])
+            #if feed an incomplete grid, remove missing values
+            if not solved:
+                row -= {0}
+                col -= {0}
+                #add one
+                row |= {1}
+                col |= {1}
 
             #checks to see that only one of each possibility exists at a time
-            if(set(row[1:]) != {1} or set(col[1:]) != {1} ):
+            if(row != {1} or col != {1}):
                 #print a statement to help locate error locations
                 print(f"Invalid value found in row or column: {i}")
                 #returns a false testing is the test passes
@@ -177,8 +197,13 @@ class Grid:
                         quad_col_offset * 3 : (quad_col_offset + 1) * 3
                     ].flatten(),
                     minlength=10
-                )
+                )[1:]
             )
+
+            if not solved:
+                #I know, I could reorganize so I only call the if once, but I think it's more readable this way
+                quad_set -= {0}
+                quad_set |= {1}
 
             if(quad_set != {1}):
                 #print a statment to help locate which quadrant has an error

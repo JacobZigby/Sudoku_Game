@@ -9,11 +9,14 @@ class Grid:
     VALUES = {1,2,3,4,5,6,7,8,9}
 
     #constructor method
-    def __init__(self):
-        #initalize grid
-        self.grid = None 
-        #generate the grid itself
-        self.generator()
+    def __init__(self, grid = None, solved=True):
+        #check if empty
+        if grid is None:
+            #generate the grid itself
+            self.generator()
+        else:
+            self.set_grid(grid, solved)
+
 
     #Function to generate a grid
     def generator(self):
@@ -35,8 +38,8 @@ class Grid:
             self.grid[offset : 3 + offset, offset : 3 + offset] = np.reshape(temp_quad, (3,3))
 
         #call the filler function
-        self.fill_grid(0,3)
-        
+        self.fill_grid(0, 3)
+
 
     #Create a recursive backtracking method to fill in the grid
     def fill_grid(self, row, col):
@@ -84,34 +87,6 @@ class Grid:
 
         return list(values)
 
-    #Check to see if a hypothetical value can fit into a given grid at selected location
-    def is_valid(grid, row:int, col:int, value:int):
-        #check to see if new value already exists in row
-        if value in grid[row]:
-            #if value exists return false
-            print(f"Value {value} exists on row: {row}")
-            return False
-        
-        #check to see if new value already exists in col
-        if value in grid[:,col]:
-            #if value exists return false
-            print(f"Value {value} exists on col: {col}")
-            return False
-
-        #identify current quad by getting the floor division of current coordinates
-        col_quad = col // 3
-        row_quad = row // 3
-        
-        #create a list to easily check if value exists inside
-        quad_list = grid[row_quad*3:(row_quad+1)*3, col_quad*3:(col_quad+1)*3].flatten()
-
-        #check if the value exists inside the quad
-        if value in quad_list:
-            print(f"Value {value} exists in quad {(col_quad,row_quad)}")
-            return False
-        
-        #if none of the conditions passed, return true as value does not exist yet
-        return True
 
     #Check to see if a given value matches with the one found on the grid
     def is_match(self, row:int, col:int, value:int):
@@ -140,18 +115,21 @@ class Grid:
 
     #basic get function
     def get_grid(self):
-        return(self.grid)
+        return(self.grid.copy())
 
     #basic set function
-    def set_grid(self, grid):
+    def set_grid(self, grid, solved = True):
         self.grid = grid
+        if not self.authenticator(grid, solved):
+            self.grid = None
+            raise ValueError("Invalid Grid Passed")
 
     #create a set row and col method and an is_solvable method that uses a solve method
 
     def __eq__(self, grid: object) -> bool:
         pass
 
-    def authenticator(grid, solved = True):
+    def authenticator(self, grid, solved = True):
         #the grid should be a 2d array with the shape of 9 by 9
         if type(grid) not in [np.ndarray, list]:
             raise TypeError(f"Recieved: {type(grid)} Expected: (ndarray, List)")
@@ -159,6 +137,11 @@ class Grid:
         #change to numpy array and check to make sure size is 9X9
         if type(grid) is list:
             grid = np.array(grid)
+
+        #confirm that grid is indeed 9 by 9
+        if grid.shape != (9,9):
+            #debating just return a false response here
+            raise ValueError(f"Recieved Shape: {grid.shape} Expected: (9, 9)")
 
         #offsets to be used to determin which quad to check at the specified time
         quad_col_offset = 0
@@ -168,20 +151,6 @@ class Grid:
         for i in range(len(grid)):
             row = set(np.bincount(grid[i], minlength=10)[1:])
             col = set(np.bincount(grid[:,i],minlength=10)[1:])
-            #if feed an incomplete grid, remove missing values
-            if not solved:
-                row -= {0}
-                col -= {0}
-                #add one
-                row |= {1}
-                col |= {1}
-
-            #checks to see that only one of each possibility exists at a time
-            if(row != {1} or col != {1}):
-                #print a statement to help locate error locations
-                print(f"Invalid value found in row or column: {i}")
-                #returns a false testing is the test passes
-                return False
 
             #checking quads
             if(i != 0 and i % 3 == 0):
@@ -200,10 +169,23 @@ class Grid:
                 )[1:]
             )
 
+            #if feed an incomplete grid, remove missing 0 values
             if not solved:
-                #I know, I could reorganize so I only call the if once, but I think it's more readable this way
+                row -= {0}
+                col -= {0}
+                #add one
+                row |= {1}
+                col |= {1}
+
                 quad_set -= {0}
                 quad_set |= {1}
+
+            #checks to see that only one of each possibility exists at a time
+            if(row != {1} or col != {1}):
+                #print a statement to help locate error locations (debating return string value as well)
+                print(f"Invalid value found in row or column: {i}")
+                #returns a false testing is the test passes
+                return False
 
             if(quad_set != {1}):
                 #print a statment to help locate which quadrant has an error
@@ -213,5 +195,10 @@ class Grid:
             #quad section here
             #add the extra value for the next itteration
             quad_col_offset += 1
+
+        #lastly if grid is not solved, check to see if it's solveable
+        if not solved:
+            return self.fill_grid(0,0)
+
 
         return True

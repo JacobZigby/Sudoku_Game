@@ -203,5 +203,5 @@ class Grid:
     def __eq__(self, __o: object) -> bool:
         pass
 
-    def __str__(self) -> str:
-        return self.grid
+    def __str__(self):
+        return np.array_str(self.grid)

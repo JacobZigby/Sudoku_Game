@@ -120,37 +120,34 @@ class Grid:
     #basic set function
     def set_grid(self, grid, solved = True):
         self.grid = grid
-        if not self.authenticator(grid, solved):
+        #Check to see if a valid grid was given
+        if not self.authenticator(solved):
+            #reset to nothing and pass an error
             self.grid = None
             raise ValueError("Invalid Grid Passed")
 
-    #create a set row and col method and an is_solvable method that uses a solve method
-
-    def __eq__(self, grid: object) -> bool:
-        pass
-
-    def authenticator(self, grid, solved = True):
+    def authenticator(self, solved = True):
         #the grid should be a 2d array with the shape of 9 by 9
-        if type(grid) not in [np.ndarray, list]:
-            raise TypeError(f"Recieved: {type(grid)} Expected: (ndarray, List)")
+        if type(self.grid) not in [np.ndarray, list]:
+            raise TypeError(f"Recieved: {type(self.grid)} Expected: (ndarray, List)")
 
         #change to numpy array and check to make sure size is 9X9
-        if type(grid) is list:
-            grid = np.array(grid)
+        if type(self.grid) is list:
+            self.grid = np.array(self.grid)
 
         #confirm that grid is indeed 9 by 9
-        if grid.shape != (9,9):
+        if self.grid.shape != (9,9):
             #debating just return a false response here
-            raise ValueError(f"Recieved Shape: {grid.shape} Expected: (9, 9)")
+            raise ValueError(f"Recieved Shape: {self.grid.shape} Expected: (9, 9)")
 
         #offsets to be used to determin which quad to check at the specified time
         quad_col_offset = 0
         quad_row_offset = 0
 
         #Check to see if only one instance of each number exists per column or row
-        for i in range(len(grid)):
-            row = set(np.bincount(grid[i], minlength=10)[1:])
-            col = set(np.bincount(grid[:,i],minlength=10)[1:])
+        for i in range(len(self.grid)):
+            row = set(np.bincount(self.grid[i], minlength=10)[1:])
+            col = set(np.bincount(self.grid[:,i],minlength=10)[1:])
 
             #checking quads
             if(i != 0 and i % 3 == 0):
@@ -161,7 +158,7 @@ class Grid:
             quad_set = set(
                 #turning it into an array of unique values
                 np.bincount(
-                    grid[
+                    self.grid[
                         quad_row_offset * 3 : (quad_row_offset + 1) * 3,
                         quad_col_offset * 3 : (quad_col_offset + 1) * 3
                     ].flatten(),
@@ -196,9 +193,15 @@ class Grid:
             #add the extra value for the next itteration
             quad_col_offset += 1
 
-        #lastly if grid is not solved, check to see if it's solveable
+        #lastly if grid is not solved, check to see if it's solveable and solve it
         if not solved:
             return self.fill_grid(0,0)
 
 
         return True
+
+    def __eq__(self, __o: object) -> bool:
+        pass
+
+    def __str__(self) -> str:
+        return self.grid

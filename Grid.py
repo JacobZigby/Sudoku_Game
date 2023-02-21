@@ -200,8 +200,12 @@ class Grid:
 
         return True
 
-    def __eq__(self, __o: object) -> bool:
-        pass
+    def __eq__(self, grid_obj: object) -> bool:
+        #check if grid_obj is actually a grid object
+        if not isinstance(grid_obj, Grid):
+            raise TypeError(f"Recieved: {type(grid_obj)} Expected: Grid object")
+        
+        return np.array_str(self.grid) == np.array_str(grid_obj.get_grid())
 
     def __str__(self):
         return np.array_str(self.grid)

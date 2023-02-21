@@ -18,10 +18,25 @@ def main():
     unsolved2 = grid2.random_removal()
     print(unsolved2, end = "\n\n")
 
-    print("testing solver")
+    print("testing solver:")
+    print("unsolved input:")
     print(unsolved1, end="\n\n")
     grid3 = Grid(unsolved1, False)
-    print(grid3.get_grid())
+    print("Solved output")
+    print(grid3.get_grid(), end="\n\n")
+
+    print("Testing the to string method:")
+    print(grid1, end = "\n\n")
+
+    print("Testing object types:")
+    print(f"Grid 3 is type: {type(grid3)}\n")
+
+    print("Testing the equal to method:")
+    print("Grid 1 vs Grid 3")
+    print(f"{grid1}\nVS\n{grid3}")
+    print(grid1 == grid3)
+
+    print(grid3 == grid3)
 
 if __name__ == "__main__":
     main()
